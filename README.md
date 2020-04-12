@@ -1,5 +1,5 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
+You will need to use this chrome extension => https://mybrowseraddon.com/access-control-allow-origin.html to solve cors issue
 ## Available Scripts
 
 In the project directory, you can run:

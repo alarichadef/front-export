@@ -1,17 +1,63 @@
 import React from 'react';
 import './App.css';
 
-const url='http://www.bierebel.com'
+let myInit = {
+  method: 'GET',
+  mode: 'cors',
+  cache: 'default'
+};
+
+const launchDownload = (fileName='file.csv', csv) => {
+  console.warn('launch download');
+  let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  let downloadLink = document.createElement("a");
+  downloadLink.download = fileName;
+  downloadLink.href = window.URL.createObjectURL(blob);
+  downloadLink.style.display = "none";
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+};
+
+function launchGuide() {
+  let csv = '';
+  const url = 'https://www.guide-biere.fr/deguster/M_toutes.php';
+  window.fetch(url, myInit).then(response => {
+    response.text().then(text => {
+      let el = document.createElement( 'html');
+      el.innerHTML = text;
+      let beers = el.querySelectorAll('.scrollContainer tr');
+      beers.forEach(beer => {
+        let rowContent = [];
+        let columns = beer.querySelectorAll('td');
+        if (columns.length) {
+          //Name
+          rowContent.push(columns[0].innerText.trim());
+          //Image => Just for keeping the same csv structure between scraps
+          rowContent.push('no-picture');
+          //brewery
+          rowContent.push(columns[5].innerText.trim());
+          //alcohol
+          rowContent.push(columns[4].innerText.trim());
+          //type
+          rowContent.push(columns[8].innerText.trim());
+          //description
+          rowContent.push(columns[6].innerText.trim());
+          rowContent = rowContent.join(";");
+          csv += rowContent + "\r\n";
+        }
+      });
+      el.remove();
+      launchDownload('guide-biere.csv', csv);
+     });
+  })
+}
+
 
 function launchScrap(start=0, end=1, csvParam='') {
+  const url='http://www.bierebel.com';
 
   let csv = csvParam;
 
-  let myInit = { 
-    method: 'GET',
-    mode: 'cors',
-    cache: 'default'
-  };
   // ABCDEFGHIJKLMNOPQRSTUVWXYZ
   let promiseArray = [];
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.substring(start, end).split('').forEach(letter => {
@@ -68,6 +114,9 @@ function launchScrap(start=0, end=1, csvParam='') {
   
                 let alcohol = beer.querySelectorAll('body #main .container .row .table td')?.[3];
                 rowContent.push(alcohol ? alcohol.innerText.slice(0, -1) : 'no-alcohol');
+
+                let type = beer.querySelectorAll('body #main .container .row .table td')?.[5];
+                rowContent.push(type ? type.innerText : 'no-type');
   
                 let description = beer.querySelectorAll('body #main .container .row .col-sm-9 .row p')?.[1];
                 rowContent.push(description ? description.innerText : 'no-description');
@@ -78,14 +127,7 @@ function launchScrap(start=0, end=1, csvParam='') {
             });
           }).finally(() => {
             if (end === 26) {
-              console.warn('Launch download');
-              let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-              let downloadLink = document.createElement("a");
-              downloadLink.download = 'file.csv';
-              downloadLink.href = window.URL.createObjectURL(blob);
-              downloadLink.style.display = "none";
-              document.body.appendChild(downloadLink);
-              downloadLink.click();
+              launchDownload('bierebel.csv', csv);
             } else {
               launchScrap(start+1, end+1, csv);
             }
@@ -95,11 +137,17 @@ function launchScrap(start=0, end=1, csvParam='') {
   });
 }
 
-function ScrapBierebel() {
+function Scrapper() {
   return (
     <div>
-      Hello here we are gonna scrap bierebel
-      <button onClick={() => launchScrap()}> Launch scrap</button>
+      <div>
+        Hello here we are gonna scrap bierebel
+        <button onClick={() => launchScrap()}> Launch scrap</button>
+      </div>
+      <div>
+        Fuck off let's scrap guide de la fucking biere
+        <button onClick={() => launchGuide()}>Launch scrap guide de la biere</button>
+      </div>
     </div>
   )
 }
@@ -107,7 +155,7 @@ function ScrapBierebel() {
 function App() {
   return (
     <div className="App">
-      <ScrapBierebel/>
+      <Scrapper/>
     </div>
   );
 }
