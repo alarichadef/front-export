@@ -6,6 +6,7 @@ let myInit = {
   mode: 'cors',
   cache: 'default'
 };
+const url = 'https://aleforall.herokuapp.com';
 
 const launchDownload = (fileName='file.csv', csv) => {
   console.warn('launch download');
@@ -152,10 +153,74 @@ function Scrapper() {
   )
 }
 
+function DataUpdate() {
+  const urlPost = url + '/upload-beers';
+  const [file, setFile] = React.useState(null);
+
+  const uploadFile = React.useCallback( () => {
+    if (!file) {
+      return;
+    }
+    let data = new FormData();
+    data.append('file', file);
+    window.fetch(urlPost, {
+      method:'POST',
+      body: data,
+      mode: 'cors'
+    }).then(response => {
+      console.warn(response);
+    }).catch(error => {
+
+    });
+  }, [file, urlPost]);
+
+
+  return (
+    <div>
+      <label htmlFor="file">Select a fucking csv to update the database data</label>
+      <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
+
+    {file && <div>
+        <button onClick={uploadFile}>Upload file</button>
+    </div>}
+
+    </div>
+  );
+}
+
+function FetchDB() {
+  const urlGet = url + '/list-beers';
+  const fetchBeers = React.useCallback(() => {
+
+    window.fetch(urlGet, {
+      method:'GET',
+      mode: 'cors'
+    }).then(response => {
+      response.json().then(beers => {
+        beers.forEach(beer => {
+          let el = document.createElement('p');
+          el.innerHTML = JSON.stringify(beer);
+          document.getElementsByTagName('body')[0].appendChild(el);
+        });
+      });
+    }).catch(error => {
+    });
+
+  }, [urlGet]);
+
+  return (
+    <button onClick={fetchBeers}>
+      Fetch all beers from DB
+    </button>
+  );
+}
+
 function App() {
   return (
     <div className="App">
       <Scrapper/>
+      <DataUpdate/>
+      <FetchDB/>
     </div>
   );
 }
