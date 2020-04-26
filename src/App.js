@@ -7,9 +7,10 @@ let myInit = {
   cache: 'default'
 };
 const url = 'https://aleforall.herokuapp.com';
+//const url = 'http://localhost:5001';
 
 const launchDownload = (fileName='file.csv', csv) => {
-  console.warn('launch download');
+
   let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   let downloadLink = document.createElement("a");
   downloadLink.download = fileName;
@@ -154,7 +155,7 @@ function Scrapper() {
 }
 
 function DataUpdate() {
-  const urlPost = url + '/upload-beers';
+  const urlPost = url + '/upload/upload-beers';
   const [file, setFile] = React.useState(null);
 
   const uploadFile = React.useCallback( () => {
@@ -177,7 +178,7 @@ function DataUpdate() {
 
   return (
     <div>
-      <label htmlFor="file">Select a fucking csv to update the database data</label>
+      <label htmlFor="file">Select a fucking csv to update the database data with beers</label>
       <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
 
     {file && <div>
@@ -189,7 +190,7 @@ function DataUpdate() {
 }
 
 function FetchDB() {
-  const urlGet = url + '/list-beers';
+  const urlGet = url + '/beers';
   const fetchBeers = React.useCallback(() => {
 
     window.fetch(urlGet, {
@@ -201,6 +202,9 @@ function FetchDB() {
           let el = document.createElement('p');
           el.innerHTML = JSON.stringify(beer);
           document.getElementsByTagName('body')[0].appendChild(el);
+          setTimeout(() => {
+            el.remove()
+          }, 10000);
         });
       });
     }).catch(error => {
@@ -210,10 +214,335 @@ function FetchDB() {
 
   return (
     <button onClick={fetchBeers}>
-      Fetch all beers from DB
+      Fetch all beers from DB (deleted after 10s)
     </button>
   );
 }
+
+function UploadImage() {
+  const urlSigned = url + '/upload/get-signed-url';
+  const urlBeer = url + '/beers'
+  const [file, setFile] = React.useState(null);
+
+  const uploadFile = React.useCallback( () => {
+    if (!file) {
+      return;
+    }
+    //First let's hit the api for an url
+    window.fetch(urlSigned).then(response => {
+      response.json().then(json => {
+        if (json.url) {
+          //First let's hit the ap
+          let data = new FormData();
+          for (let field in json.fields) {
+            data.append(field, json.fields[field]);
+          }
+          data.append('file', file);
+          window.fetch(json.url, {
+            method:'POST',
+            body: data,
+            mode:'cors'
+          }).then(response => {
+            if (response.status === 204) {
+              console.log('picture uploaded ');
+              let picture = json.fields['Key'];
+              let name =  'a' + new Date().getTime().toString();
+              let fakeBeer = {
+                picture,
+                name,
+                description: 'blabla',
+                alcohol: 10,
+                brewery: 'truc',
+                type: 'bidule'
+              }
+              window.fetch(urlBeer, {
+                method: 'POST',
+                body: JSON.stringify(fakeBeer),
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+              }).then((response) => {
+                console.warn('resp ', response)
+              })
+            }
+          }).catch(error => {
+      
+          });
+        }
+      })
+    });
+  }, [file, urlSigned, urlBeer]);
+
+
+  return (
+    <p>
+      <div>
+        With this button you upload a picture and then try to create a fake beer with random name
+        <label htmlFor="file">Select a fucking picture to upload it to the fucking s3</label>
+        <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
+
+      {file && <div>
+          <button onClick={uploadFile}>Upload file</button>
+      </div>}
+
+      </div>
+    </p>
+  );
+
+}
+
+
+function GetObject() {
+  const urlBeer = url + '/beers/Leffe Blonde'
+
+  const getBeer = React.useCallback( () => {
+    //First let's hit the api for an url
+    window.fetch(urlBeer).then(response => {
+      console.log(response);
+      response.json().then(beer => {
+        let el = document.createElement('p');
+        el.innerHTML = JSON.stringify(beer);
+        document.getElementsByTagName('body')[0].appendChild(el);
+        setTimeout(() => {
+          el.remove();
+        }, 10000);
+      })
+    });
+  }, [urlBeer]);
+
+
+  return (
+    <div>
+        <button onClick={getBeer}>Get from DB the beer with name: Leffe Blonde</button>
+    </div>
+  )
+}
+
+function UpdateObject() {
+  const urlBeer = url + '/beers/Leffe Blonde'
+
+  const updateBeer = React.useCallback( () => {
+    //First let's hit the api for an url
+    let fakeBeer = {
+      picture: 'blabla',
+      description: 'blabla' + new Date().getTime().toString(),
+      alcohol: 10,
+      brewery: 'truc',
+      type: 'bidule'
+    }
+    window.fetch(urlBeer, {
+      method: 'PUT',
+      body: JSON.stringify(fakeBeer),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(beer => {
+        let el = document.createElement('p');
+        el.innerHTML = JSON.stringify(beer);
+        document.getElementsByTagName('body')[0].appendChild(el);
+        setTimeout(() => {
+          el.remove();
+        }, 10000);
+      })
+    });
+  }, [urlBeer]);
+
+
+  return (
+    <div>
+        <button onClick={updateBeer}>Update from DB the beer with name: Leffe Blonde with random description from</button>
+    </div>
+  )
+}
+
+function DataUpdateBar() {
+  const urlPost = url + '/upload/upload-bars';
+  const [file, setFile] = React.useState(null);
+
+  const uploadFile = React.useCallback( () => {
+    if (!file) {
+      return;
+    }
+    let data = new FormData();
+    data.append('file', file);
+    window.fetch(urlPost, {
+      method:'POST',
+      body: data,
+      mode: 'cors'
+    }).then(response => {
+      console.warn(response);
+    }).catch(error => {
+
+    });
+  }, [file, urlPost]);
+
+
+  return (
+    <div>
+      <label htmlFor="file">Select a fucking csv to update the database data with bars</label>
+      <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
+
+    {file && <div>
+        <button onClick={uploadFile}>Upload file</button>
+    </div>}
+
+    </div>
+  );
+}
+
+function FetchDBBar() {
+  const urlGet = url + '/bars';
+  const fetchBars = React.useCallback(() => {
+
+    window.fetch(urlGet, {
+      method:'GET',
+      mode: 'cors'
+    }).then(response => {
+      response.json().then(bars => {
+        bars.forEach(bar => {
+          let el = document.createElement('p');
+          el.innerHTML = JSON.stringify(bar);
+          document.getElementsByTagName('body')[0].appendChild(el);
+          setTimeout(() => {
+            el.remove()
+          }, 10000);
+        });
+      });
+    }).catch(error => {
+    });
+
+  }, [urlGet]);
+
+  return (
+    <button onClick={fetchBars}>
+      Fetch all bars from DB (deleted after 10s)
+    </button>
+  );
+}
+
+function launchDownloadJson(jsonArray, exportName='barfinal') {
+  let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonArray));
+  let downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + ".json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
+  let myInit = {
+    method: 'POST',
+    mode: 'cors',
+    cache: 'default',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Parse-REST-API-Key':'D3ojOXvZ7TPco997fgRFdnucqv7RwoAQMqQU2ciM',
+        'X-Parse-Session-Token':'r:10fc71a8512fcde79cf4c17a93c72945',
+        'X-Parse-Application-Id':'MoFHgtQmohp5h0tKcicxuy5fzkDmG7Qc669KpZfB'
+    }
+  };
+  myInit.body = JSON.stringify(dataArray[index]);
+  window.fetch('https://server.mistergoodbeer.com/parse/functions/getSafeBars', myInit).then(resp => {
+    if(resp.status !== 200) {
+      return setTimeout(() => getData(dataArray, idArray, index, jsonArray), 500);
+    }
+  resp.json().then(bars => {
+    if(bars && bars.result) {
+      bars.result.forEach(bar => {
+        if (!idArray.includes(bar.objectId)) {
+          idArray.push(bar.objectId);
+        }
+      });
+      let promiseArray = [];
+      idArray.forEach(id => {
+        myInit.body = JSON.stringify({id});
+        promiseArray.push(window.fetch('https://server.mistergoodbeer.com/parse/functions/getBarWithBeers', myInit));
+      });
+      Promise.all(promiseArray).then(responses => {
+        let readPromises = []
+        responses.forEach(resp => {
+          if(resp.status !== 200) {
+            return setTimeout(() => getData(dataArray, idArray, index, jsonArray), 500);
+          }
+          readPromises.push(resp.json());
+        });
+        Promise.all(readPromises).then(_bars => {
+          _bars.forEach(_bar => {
+            jsonArray.push(_bar.result);
+          });
+          if ((index + 1) === dataArray.length) {
+            launchDownloadJson(jsonArray);
+          } else {
+            if (index%1000 === 0) {
+              launchDownloadJson(jsonArray, `bar_${index}`);
+              jsonArray=[];
+            }
+            else if (index%200 === 0) {
+              launchDownloadJson(jsonArray, `save`);
+            }
+            setTimeout(() => {
+              getData(dataArray, idArray, index+1, jsonArray);
+            },300);
+          }
+        })
+      });
+    }
+  })
+ }).catch(e => {
+  console.log('error =>', e);
+  //Launch download and empty json array
+  launchDownloadJson(jsonArray, `bar_${index}`);
+  jsonArray = [];
+  setTimeout(() => {
+    getData(dataArray, idArray, index, jsonArray);
+  },2000);
+ });
+
+}
+
+
+function fetchMister() {
+  const step = 0.002613359137723762; //Increment for longitude, decrement for latitude
+  const longitudeLength = 0.0052678585052490234  ;
+  const latitudeLength = 0.003306741819187664;
+  const endLongitude = 2.415919;
+  const startLongitude = 2.252884;
+  const endlLatitude = 48.898581;
+  const startLatitude = 48.814777;
+
+  let nbOperation = 0;
+  let currentLongitude = startLongitude;
+  let currentLatitude = startLatitude;
+
+  //Here build array of parameters for Post getSafeBars
+  let dataBody = [];
+  while (currentLongitude < endLongitude) {
+    currentLatitude += step;
+    let bodyCurrent = {"geobox":{"northeast":{"latitude":currentLatitude + latitudeLength,"longitude":currentLongitude + longitudeLength},"southwest":{"latitude":currentLatitude,"longitude":currentLongitude}},"limit":20};
+    dataBody.push(bodyCurrent);
+    if (currentLatitude > endlLatitude) {
+      currentLatitude = startLatitude;
+      currentLongitude += step;
+    }
+    nbOperation++;
+  }
+  console.log(nbOperation, currentLongitude, currentLatitude, dataBody);
+  getData(dataBody);
+}
+
+function Mister() {
+  return (
+    <div>
+      <p>
+        <button onClick={fetchMister}>Fetch mister good beer</button>
+      </p>
+    </div>
+  )
+}
+
 
 function App() {
   return (
@@ -221,6 +550,12 @@ function App() {
       <Scrapper/>
       <DataUpdate/>
       <FetchDB/>
+      <UploadImage/>
+      <GetObject/>
+      <UpdateObject/>
+      <DataUpdateBar/>
+      <FetchDBBar/>
+      <Mister/>
     </div>
   );
 }
