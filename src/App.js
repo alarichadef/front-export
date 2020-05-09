@@ -8,6 +8,7 @@ let myInit = {
 };
 const url = 'https://aleforall.herokuapp.com';
 //const url = 'http://localhost:5001';
+const s3Url = 'https://d30jrcrwkxm8hm.cloudfront.net/';
 
 const launchDownload = (fileName='file.csv', csv) => {
 
@@ -232,7 +233,7 @@ function UploadImage() {
     window.fetch(urlSigned).then(response => {
       response.json().then(json => {
         if (json.url) {
-          //First let's hit the ap
+          //then let's hit amazon
           let data = new FormData();
           for (let field in json.fields) {
             data.append(field, json.fields[field]);
@@ -244,7 +245,6 @@ function UploadImage() {
             mode:'cors'
           }).then(response => {
             if (response.status === 204) {
-              console.log('picture uploaded ');
               let picture = json.fields['Key'];
               let name =  'a' + new Date().getTime().toString();
               let fakeBeer = {
@@ -253,8 +253,9 @@ function UploadImage() {
                 description: 'blabla',
                 alcohol: 10,
                 brewery: 'truc',
-                type: 'bidule'
+                type: 'blond'
               }
+              //let's save everything
               window.fetch(urlBeer, {
                 method: 'POST',
                 body: JSON.stringify(fakeBeer),
@@ -262,11 +263,40 @@ function UploadImage() {
                   'Content-Type': 'application/json'
                 },
               }).then((response) => {
-                console.warn('resp ', response)
+                response.json().then(beer => {
+                  // let's hit the update now
+                  beer.description = 'ALARIC IS THE BEST';
+                  window.fetch(urlBeer +'/' + name, {
+                    method: 'PUT',
+                    body: JSON.stringify(beer),
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                  }).then((response) => {
+                    response.json().then(beer => {
+                      let el = document.createElement('p');
+                      el.innerHTML = JSON.stringify(beer);
+                      let img = document.createElement('img');
+                      img.src = s3Url + beer.picture;
+                      document.getElementsByTagName('body')[0].appendChild(el);
+                      el.appendChild(img);
+                      setTimeout(() => {
+                        window.fetch(urlBeer +'/'+name, {
+                          method: 'DELETE'
+                        }).then((response) => {
+                            response.json().then(resp => {
+                              console.warn(resp);
+                            });
+                        });
+                      }, 10000);
+                    })
+                  })
+
+                })
               })
             }
           }).catch(error => {
-      
+            console.warn('error ', error);
           });
         }
       })
@@ -278,6 +308,8 @@ function UploadImage() {
     <p>
       <div>
         With this button you upload a picture and then try to create a fake beer with random name
+        Then we display it  before deleting
+        <div/>
         <label htmlFor="file">Select a fucking picture to upload it to the fucking s3</label>
         <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
 
@@ -323,7 +355,7 @@ function UpdateObject() {
 
   const updateBeer = React.useCallback( () => {
     //First let's hit the api for an url
-    let fakeBeer = {
+     let fakeBeer = {
       picture: 'blabla',
       description: 'blabla' + new Date().getTime().toString(),
       alcohol: 10,
@@ -432,7 +464,8 @@ function launchDownloadJson(jsonArray, exportName='barfinal') {
   downloadAnchorNode.remove();
 }
 
-function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
+function getData(dataArray, idArray=[], index=101, jsonArray=[]) {
+  console.warn('index =', index);
   let myInit = {
     method: 'POST',
     mode: 'cors',
@@ -446,6 +479,7 @@ function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
   };
   myInit.body = JSON.stringify(dataArray[index]);
   window.fetch('https://server.mistergoodbeer.com/parse/functions/getSafeBars', myInit).then(resp => {
+    console.warn('in get safe bars =', index);
     if(resp.status !== 200) {
       return setTimeout(() => getData(dataArray, idArray, index, jsonArray), 500);
     }
@@ -462,6 +496,8 @@ function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
         promiseArray.push(window.fetch('https://server.mistergoodbeer.com/parse/functions/getBarWithBeers', myInit));
       });
       Promise.all(promiseArray).then(responses => {
+        console.warn('in get bars with beers =', index);
+
         let readPromises = []
         responses.forEach(resp => {
           if(resp.status !== 200) {
@@ -470,6 +506,7 @@ function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
           readPromises.push(resp.json());
         });
         Promise.all(readPromises).then(_bars => {
+          console.warn('in bars =', index, _bars);
           _bars.forEach(_bar => {
             jsonArray.push(_bar.result);
           });
@@ -480,22 +517,19 @@ function getData(dataArray, idArray=[], index=0, jsonArray=[]) {
               launchDownloadJson(jsonArray, `bar_${index}`);
               jsonArray=[];
             }
-            else if (index%200 === 0) {
+            else if (index%50 === 0) {
               launchDownloadJson(jsonArray, `save`);
             }
             setTimeout(() => {
               getData(dataArray, idArray, index+1, jsonArray);
             },300);
           }
-        })
+        });
       });
     }
   })
  }).catch(e => {
   console.log('error =>', e);
-  //Launch download and empty json array
-  launchDownloadJson(jsonArray, `bar_${index}`);
-  jsonArray = [];
   setTimeout(() => {
     getData(dataArray, idArray, index, jsonArray);
   },2000);
@@ -520,12 +554,12 @@ function fetchMister() {
   //Here build array of parameters for Post getSafeBars
   let dataBody = [];
   while (currentLongitude < endLongitude) {
-    currentLatitude += step;
+    currentLatitude += latitudeLength;
     let bodyCurrent = {"geobox":{"northeast":{"latitude":currentLatitude + latitudeLength,"longitude":currentLongitude + longitudeLength},"southwest":{"latitude":currentLatitude,"longitude":currentLongitude}},"limit":20};
     dataBody.push(bodyCurrent);
     if (currentLatitude > endlLatitude) {
       currentLatitude = startLatitude;
-      currentLongitude += step;
+      currentLongitude += longitudeLength;
     }
     nbOperation++;
   }
@@ -544,6 +578,69 @@ function Mister() {
 }
 
 
+function UploadMister() {
+  const urlPost = url + '/upload/upload-mister';
+  const [file, setFile] = React.useState(null);
+
+  const uploadFile = React.useCallback( () => {
+    if (!file) {
+      return;
+    }
+    let data = new FormData();
+    data.append('file', file);
+    window.fetch(urlPost, {
+      method:'POST',
+      body: data,
+      mode: 'cors'
+    }).then(response => {
+      console.warn(response);
+    }).catch(error => {
+
+    });
+  }, [file, urlPost]);
+
+
+  return (
+    <div>
+      <label htmlFor="file">Upload CSV Mister</label>
+      <input type="file" id="file" onChange={e => setFile(e?.target?.files?.[0])}/>
+
+    {file && <div>
+        <button onClick={uploadFile}>Upload file</button>
+    </div>}
+
+    </div>
+  );
+}
+
+
+function GetObjectBar() {
+  const urlBeer = url + '/bars/68f13675-b24e-e67f-9457-0eac99a0010f'
+
+  const getBar = React.useCallback( () => {
+    //First let's hit the api for an url
+    window.fetch(urlBeer).then(response => {
+      console.log(response);
+      response.json().then(bar => {
+        let el = document.createElement('p');
+        el.innerHTML = JSON.stringify(bar);
+        document.getElementsByTagName('body')[0].appendChild(el);
+        setTimeout(() => {
+          el.remove();
+        }, 10000);
+      })
+    });
+  }, [urlBeer]);
+
+
+  return (
+    <div>
+        <button onClick={getBar}>Get from DB the bar with id: 68f13675-b24e-e67f-9457-0eac99a0010f</button>
+    </div>
+  )
+}
+
+
 function App() {
   return (
     <div className="App">
@@ -552,10 +649,12 @@ function App() {
       <FetchDB/>
       <UploadImage/>
       <GetObject/>
-      <UpdateObject/>
+      {/* <UpdateObject/> */}
       <DataUpdateBar/>
       <FetchDBBar/>
+      <GetObjectBar/>
       <Mister/>
+      <UploadMister/>
     </div>
   );
 }
