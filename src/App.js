@@ -640,6 +640,143 @@ function GetObjectBar() {
   )
 }
 
+function CreateUser() {
+  const urlUsers = url + '/users'
+  const [token, setToken] = React.useState(null);
+  const [tokenAdmin, setTokenAdmin] = React.useState(null);
+  const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6Imp3dCJ9.eyJzdWIiOiI0MTE1NzA0YS0zMDQ2LTFkNzgtNjI2ZC0xYmFhMzk3ODUwY2UiLCJ1c2VybmFtZSI6ImFsYXJpYyIsImVtYWlsIjoiYWxhcmljaGFkZWYyQGdtYWlsLmNvbSIsImlzQWRtaW4iOmZhbHNlLCJleHAiOjE1OTAyMzUxNTg2MDh9.zjj4NgmHOK9NpH_zbWxLtGkGSQvnhnTtA1vPoBXoNME';
+  const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6Imp3dCJ9.eyJzdWIiOiI0MTE1NzA0YS0zMDQ2LTFkNzgtNjI2ZC0xYmFhMzk3ODUwY2UiLCJ1c2VybmFtZSI6ImFsYXJpYyIsImVtYWlsIjoiYWxhcmljaGFkZWYyQGdtYWlsLmNvbSIsImlzQWRtaW4iOmZhbHNlLCJleHAiOjEwMDB9.M79yDInGGlyD3wNBX6QfihIV-8vvwodcKTbc0PEqnFg';
+  
+  const addUser = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      username: 'alaric',
+      email:'alarichadef2@gmail.com',
+      password: '?1Alarichadef',
+      passwordConfirmed: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signup', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const deleteUser = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/alarichadef2@gmail.com', {
+      method: 'DELETE',
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('delete', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const deleteUserNoToken = React.useCallback( () => {
+    window.fetch(urlUsers + '/alarichadef2@gmail.com', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('delete', response)
+        setToken(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const loginUser = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef2@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const loginUserAdmin = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setTokenAdmin(token);
+      });
+    });
+  }, [urlUsers]);
+
+  function testToken() {
+    let bearer = 'Bearer ' + token.token;
+    
+    window.fetch(urlUsers + '/test-token', {
+      method: 'GET',
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+      });
+    });
+  }
+
+  return (
+    <div>
+        <button onClick={addUser}>Add a fake user to db and display token</button>
+        {token && <button onClick={() => deleteUser(token.token)}>delete the fake user without admin token</button>}
+        {token && <button onClick={loginUser}>login with the fake user</button>}
+        <button onClick={loginUserAdmin}>login with the user Admin</button>
+        {tokenAdmin && <button onClick={() => deleteUser(tokenAdmin.token)}>delete the fake user with admin token</button>}
+        {token && fakeToken && <button onClick={() => deleteUser(fakeToken)}>delete the fake user with fake signature token</button>}
+        {token && expiredToken && <button onClick={() => deleteUser(expiredToken)}>delete the fake user with expired token</button>}
+        {token && <button onClick={() => deleteUserNoToken()}>delete the fake user without token</button>}
+        {token && <button onClick={() => deleteUser(null)}>delete the fake user with a null token</button>}
+    </div>
+  )
+}
+
 
 function App() {
   return (
@@ -655,6 +792,7 @@ function App() {
       <GetObjectBar/>
       <Mister/>
       <UploadMister/>
+      <CreateUser/>
     </div>
   );
 }
