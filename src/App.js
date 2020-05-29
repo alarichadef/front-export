@@ -616,7 +616,6 @@ function UploadMister() {
 
 function GetObjectBar() {
   const urlBeer = url + '/bars/68f13675-b24e-e67f-9457-0eac99a0010f'
-
   const getBar = React.useCallback( () => {
     //First let's hit the api for an url
     window.fetch(urlBeer).then(response => {
@@ -640,6 +639,323 @@ function GetObjectBar() {
   )
 }
 
+function CreateUser() {
+  const urlUsers = url + '/users'
+  const [token, setToken] = React.useState(null);
+  const [token2, setToken2] = React.useState(null);
+  const [token3, setToken3] = React.useState(null);
+  const [tokenAdmin, setTokenAdmin] = React.useState(null);
+  const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6Imp3dCJ9.eyJzdWIiOiI0MTE1NzA0YS0zMDQ2LTFkNzgtNjI2ZC0xYmFhMzk3ODUwY2UiLCJ1c2VybmFtZSI6ImFsYXJpYyIsImVtYWlsIjoiYWxhcmljaGFkZWYyQGdtYWlsLmNvbSIsImlzQWRtaW4iOmZhbHNlLCJleHAiOjE1OTAyMzUxNTg2MDh9.zjj4NgmHOK9NpH_zbWxLtGkGSQvnhnTtA1vPoBXoNME';
+  const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6Imp3dCJ9.eyJzdWIiOiI0MTE1NzA0YS0zMDQ2LTFkNzgtNjI2ZC0xYmFhMzk3ODUwY2UiLCJ1c2VybmFtZSI6ImFsYXJpYyIsImVtYWlsIjoiYWxhcmljaGFkZWYyQGdtYWlsLmNvbSIsImlzQWRtaW4iOmZhbHNlLCJleHAiOjEwMDB9.M79yDInGGlyD3wNBX6QfihIV-8vvwodcKTbc0PEqnFg';
+  const admin = '7abef57f-774b-b674-c616-08498071e22e';
+  const noAdmin = '05cb2e35-dd9d-1d71-5b42-05856682ce27';
+  const noAdmin2 = '1ff5afbf-508c-dbbc-a9d1-73bc31668c17';
+  const [ask, setAsk] = React.useState(null);
+  const barId = 'c1f7fe78-4627-a94d-95fa-be7eaa89c1da';
+
+  const addUser = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      username: 'alaric',
+      email:'alarichadef2@gmail.com',
+      password: '?1Alarichadef',
+      passwordConfirmed: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signup', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const deleteUser = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/alarichadef2@gmail.com', {
+      method: 'DELETE',
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('delete', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const deleteUserNoToken = React.useCallback( () => {
+    window.fetch(urlUsers + '/alarichadef2@gmail.com', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('delete', response)
+        setToken(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const loginUser = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef2@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const loginUserAdmin = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setTokenAdmin(token);
+      });
+    });
+  }, [urlUsers]);
+
+  function testToken() {
+    let bearer = 'Bearer ' + token.token;
+    
+    window.fetch(urlUsers + '/test-token', {
+      method: 'GET',
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+      });
+    });
+  }
+
+
+  const testAddResponsabilityAdmin = React.useCallback( (token, test=null) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/bar-responsability', {
+      method: 'POST',
+      body: JSON.stringify({userId: test ? noAdmin2 : noAdmin, barId}),
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('add ask', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const testAddResponsabilitynoAdmin = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/bar-responsability', {
+      method: 'POST',
+      body: JSON.stringify({userId: noAdmin, barId}),
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('add ask', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+
+  const testAddResponsabilitynoUser = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/bar-responsability', {
+      method: 'POST',
+      body: JSON.stringify({userId: noAdmin+'a', barId}),
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('add ask', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+  const testdeleteResponsability = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/bar-responsability', {
+      method: 'DELETE',
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({userId: noAdmin, barId})
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('delete', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+
+  const testAskResponsability = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/ask-for-bar-responsability', {
+      method: 'POST',
+      body: JSON.stringify({userId: noAdmin, barId}),
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('add ask', response)
+        setAsk(response.id);
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+  
+  const loginUser2 = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef3@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken2(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const loginUser3 = React.useCallback( () => {
+    //First let's hit the api for an url
+     let fakeUser = {
+      email:'alarichadef4@gmail.com',
+      password: '?1Alarichadef',
+    }
+    window.fetch(urlUsers + '/signin', {
+      method: 'POST',
+      body: JSON.stringify(fakeUser),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(token => {
+        console.warn('token', token)
+        setToken3(token);
+      });
+    });
+  }, [urlUsers]);
+
+  const testAcceptResponsability = React.useCallback( (token) => {
+    let bearer = 'Bearer ' + token;
+    window.fetch(urlUsers + '/handle-bar-responsability', {
+      method: 'POST',
+      body: JSON.stringify({userId: noAdmin2, barId, stateRequest: true}),
+      headers: {
+        Authorization: bearer,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      console.log(response);
+      response.json().then(response => {
+        console.warn('add ask', response)
+        // setToken(null);
+        // setTokenAdmin(null);
+      });
+    });
+  }, [urlUsers]);
+
+
+  return (
+    <div>
+        <button onClick={addUser}>Add a fake user to db and display token</button>
+        {token && <button onClick={() => deleteUser(token.token)}>delete the fake user without admin token</button>}
+        {token && <button onClick={loginUser}>login with the fake user</button>}
+        <button onClick={loginUserAdmin}>login with the user Admin</button>
+        {tokenAdmin && <button onClick={() => deleteUser(tokenAdmin.token)}>delete the fake user with admin token</button>}
+        {token && fakeToken && <button onClick={() => deleteUser(fakeToken)}>delete the fake user with fake signature token</button>}
+        {token && expiredToken && <button onClick={() => deleteUser(expiredToken)}>delete the fake user with expired token</button>}
+        {token && <button onClick={() => deleteUserNoToken()}>delete the fake user without token</button>}
+        {token && <button onClick={() => deleteUser(null)}>delete the fake user with a null token</button>}
+        {tokenAdmin && <button onClick={() => testAddResponsabilityAdmin(tokenAdmin.token)}>add responsability with admin</button>}
+        {token && <button onClick={() => testAddResponsabilitynoAdmin(token.token)}>add responsability with no admin</button>}
+        {tokenAdmin && <button onClick={() => testAddResponsabilitynoUser(tokenAdmin.token)}>add responsability with admin but no user</button>}
+        {tokenAdmin && <button onClick={() => testdeleteResponsability(tokenAdmin.token)}>delete responsability with admin</button>}
+        <button onClick={loginUser2}>login with the fake user 2</button>
+        {token2 && <button onClick={() => testAskResponsability(token2.token)}>test ask responsability user 2</button>}
+        {tokenAdmin && <button onClick={() => testAddResponsabilityAdmin(tokenAdmin.token, 'ala')}>add responsability user 3 with admin</button>}
+        <button onClick={loginUser3}>login with the fake user 3</button>
+        {token3 && <button onClick={() => testAskResponsability(token3.token)}>test ask responsability user 3</button>}
+        {token3 && tokenAdmin && <button onClick={() => testAcceptResponsability(tokenAdmin.token)}>test accept responsability user 3 admin</button>}
+        {token3 && token2 && <button onClick={() => testAcceptResponsability(token2.token)}>test accept responsability user 3 with user 2</button>}
+    </div>
+  )
+}
+
 
 function App() {
   return (
@@ -655,6 +971,7 @@ function App() {
       <GetObjectBar/>
       <Mister/>
       <UploadMister/>
+      <CreateUser/>
     </div>
   );
 }
